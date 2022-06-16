@@ -42,6 +42,9 @@ class Layer:
                      number_of_inputs=number_of_inputs,
                      input_layer=input_layer)
 
+    def feed_forward(self, inputs: np.array) -> np.array:
+        return np.array([neuron.feed_forward(inputs) for neuron in self._neurons])
+
     @classmethod
     def _define_layer(cls, number_of_neurons=1, number_of_inputs=1, input_layer=False):
         if input_layer:

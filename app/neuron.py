@@ -41,7 +41,7 @@ class AbsNeuron(ABC):
         return f"{self.__class__.__name__}: inputs={self.inputs}"
 
     @abstractmethod
-    def feedforward(self, inputs: np.array) -> Any:
+    def feed_forward(self, inputs: np.array) -> Any:
         pass
 
 
@@ -50,7 +50,7 @@ class InputNeuron(AbsNeuron):
     def __init__(self) -> NoReturn:
         super().__init__(number_of_inputs=1, func=lambda x: x)
 
-    def feedforward(self, inputs: float) -> float:
+    def feed_forward(self, inputs: float) -> float:
         if isinstance(inputs, float) | isinstance(inputs, int):
             return inputs
         else:
@@ -68,6 +68,6 @@ class Neuron(AbsNeuron):
     def _sigmoid(cls, x: float) -> float:
         return 1 / (1 + np.exp(-x))
 
-    def feedforward(self, inputs: np.array) -> float:
+    def feed_forward(self, inputs: np.array) -> float:
         total: float = np.dot(self.weights, inputs) + self.bias
         return self._func(total)
