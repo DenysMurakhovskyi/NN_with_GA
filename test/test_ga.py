@@ -38,3 +38,9 @@ class TestGA(TestCase):
 
         actual = self.ga._evaluate_fitness()
         self.assertEqual(max(evaluations), max(actual))
+
+    def test_ga_solve(self):
+        X, y = make_initial_data()
+        self.nn._prepare_fit(X, y)
+        self.ga.solve()
+

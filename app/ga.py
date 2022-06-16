@@ -8,7 +8,6 @@ from collections import Counter
 import math
 from random import uniform
 
-
 logger = logging.getLogger('main')
 logger.setLevel(logging.INFO)
 
@@ -16,7 +15,7 @@ logger.setLevel(logging.INFO)
 @dataclass
 class GeneticParams:
     population_size: int = 200
-    max_generations: int = 200
+    max_generations: int = 10
     n_best_share: float = 0.4
     n_rand_share: float = 0.1
     mutation_rate: float = 0.1
@@ -56,94 +55,81 @@ class GeneticAlgorithm:
         for _ in range(self.parameters.max_generations):
 
             # evaluate population with fitness function
-            population_evaluation = self._evaluate_fitness(self.population)
-            max_fitness_value = max(list(population_evaluation.values()))
-            logger.info(f'Iteration {_}, min fitness func value {min(list(population_evaluation.values()))},'
+            population_evaluation = self._evaluate_fitness()
+            max_fitness_value = max(population_evaluation)
+            logger.info(f'Iteration {_}, min fitness func value {min(population_evaluation)},'
                         f'max fitness func value {max_fitness_value}')
 
             # choose N best members
             n_best_members = math.floor(self.parameters.n_best_share * self.parameters.population_size)
-            best_population = list(population_evaluation.keys())[:n_best_members]
+            sorted_population_evaluation = sorted(population_evaluation, reverse=True)
+            lower_score_bound = sorted_population_evaluation[n_best_members]
+            best_population = [citizen for citizen, score in zip(self.population, population_evaluation)
+                               if score >= lower_score_bound]
 
             # define left members and choose random N members
-            left_members = list(self.members_set - set(best_population))
+            left_members = [(citizen, score) for citizen, score in zip(self.population, population_evaluation)
+                            if score < lower_score_bound]
             random_members_number = int(self.parameters.population_size *
                                         self.parameters.n_rand_share *
                                         (1 - self.parameters.n_best_share))
-            randomly_chosen_members = random.sample(left_members, random_members_number)
+            randomly_chosen_members = random.sample([item[0] for item in left_members], random_members_number)
 
             # create new population from best and randomly chosen members
-            new_population = np.vstack([self.population[best_population, ],
-                                        self.population[randomly_chosen_members]])
+            new_population = best_population + randomly_chosen_members
 
             # apply crossover
-            children = self._multi_crossover(max_fitness_value)
+            children = self._multi_crossover(lower_score_bound)
             if children is not None:
-                new_population = np.vstack((new_population, children))
+                new_population += children
 
             # fill the population to its size with the best ones from the left members
-            left_members = sorted(left_members, key=lambda x: population_evaluation[x])
-            left_members_to_add = left_members[:self.parameters.population_size - new_population.shape[0]]
-            new_population = np.vstack((new_population, self.population[left_members_to_add, ]))
+            left_members = sorted(left_members, key=lambda x: x[1], reverse=True)
+            left_members_to_add = left_members[:self.parameters.population_size - len(new_population)]
+            new_population += [item[0] for item in left_members_to_add]
 
             # mutation in new population
-            members_to_mutate = random.sample(self.members_list, int(round(self.parameters.population_size *
-                                                                           self.parameters.mutation_rate)))
+            members_to_mutate = random.sample(list(range(len(self.population))),
+                                              int(round(self.parameters.population_size *
+                                                        self.parameters.mutation_rate)))
             for member in members_to_mutate:
-                citizen_to_mutate = new_population[member, ]
-                new_population[member, ] = self._mutate(citizen_to_mutate)
+                citizen_to_mutate = new_population[member]
+                new_population[member] = self._mutate(citizen_to_mutate)
 
-            self.population = new_population
-
-            evaluated_population = self._evaluate_fitness(self.population)
-            best_result = np.min(np.array(list(evaluated_population.values())))
-            if self._define_stop_criteria(best_result):
-                print(f'Loop was broken on {_} iteration')
-                break
+            self._population = new_population
 
         # return results
-        evaluated_final_population = self._evaluate_fitness(self.population)
-        return self.population[0, ], list(evaluated_final_population.values())[0]
+        final_scores = self._evaluate_fitness()
+        max_score = max(final_scores)
+        best_citizen_index = final_scores.index(max_score)
+        return self.population[best_citizen_index], max_score
 
     @staticmethod
     def _default_fitness(y_pred):
-        return 0
+        return 1
 
-    def _define_stop_criteria(self, current_best_result: float) -> bool:
-        """
-        Defines heuristic criteria of loop stop
-        :return: bool
-        """
-        if current_best_result < np.max(self.current_best_results):
-            self.current_best_results[np.argmax(self.current_best_results)] = current_best_result
-
-        if self.current_best_results.sum() == np.inf:
-            return False
-
-        return np.std(self.current_best_results) < self.parameters.stop_decrease_ratio *\
-               np.mean(self.current_best_results)
-
-    def _multi_crossover(self, max_fitness_value):
+    def _multi_crossover(self, min_fitness_value) -> List:
         """
         Applying single crossover on randomly chosen members from the population
         :param max_fitness_value: the previously calculated maximum of the fitness function
         :return:
         """
-        children: Union[NDArray[NDArray], None] = None
+        children: Union[List, None] = None
         for _ in range(int((1 - self.parameters.n_best_share - self.parameters.n_rand_share)
                            * self.parameters.population_size)):
             # choose parents
-            parents = random.sample(self.members_list, 2)
+            parents_numbers = random.sample(list(range(len(self.population))), 2)
+            parents = self.population[parents_numbers[0]], self._population[parents_numbers[1]]
 
             # make child
-            child = self._single_crossover(self.population[parents[0], ], self.population[parents[1], ])
+            child = self._single_crossover(parents[0], parents[1])
 
             # check child
-            if self.fitness(child, self.distances) < max_fitness_value:
+            if self.fitness(child) > min_fitness_value:
                 if children is None:
-                    children = child.copy()
+                    children = [child.copy()]
                 else:
-                    children = np.vstack((children, child))
+                    children.append(child)
         return children
 
     def _evaluate_fitness(self) -> List[float]:
@@ -164,11 +150,10 @@ class GeneticAlgorithm:
         initial_population = []
         for _ in range(self.parameters.population_size):
             initial_population.append([uniform(self.low_bound, self.high_bound) for _ in range(self.len_of_citizen)])
-        self._population = np.array(initial_population)
+        self._population = initial_population
 
-
-    def _single_crossover(self, chromosome_1: NDArray, chromosome_2: NDArray,
-                          start_position=-1, length=-1) -> NDArray:
+    def _single_crossover(self, chromosome_1: List, chromosome_2: List,
+                          start_position=-1, length=-1) -> List:
         """
         Crossover for two chosen members
         :param chromosome_1, chromosome_2: the chosen citizens from the population
@@ -176,24 +161,16 @@ class GeneticAlgorithm:
         :param length: the length of the gens' interchange. Using for tests.
         :return: new chromosome
         """
-        exchange_start_position: int = random.randint(0, self.n_cities - 1) if start_position == -1\
+        exchange_start_position: int = random.randint(10, self.len_of_citizen - 10) if start_position == -1 \
             else start_position
-        exchange_length: int = random.randint(1, self.n_cities - exchange_start_position) if length == -1\
-            else length
-        new_chromosome: NDArray = np.hstack((chromosome_1[0:exchange_start_position, ],
-                                             chromosome_2[exchange_start_position: exchange_start_position
-                                                          + exchange_length, ],
-                                             chromosome_1[exchange_start_position + exchange_length:, ]))
-        not_included_gens = [gen for gen in chromosome_1 if gen not in new_chromosome]
-        duplicated = list(dict(filter(lambda x: x[1] > 1, Counter(new_chromosome).items())).keys())
-        for i in range(self.n_cities - 1, 0, -1):
-            if new_chromosome[i] in duplicated:
-                duplicated.pop(duplicated.index(new_chromosome[i]))
-                new_chromosome[i] = random.choice(not_included_gens)
-                not_included_gens.pop(not_included_gens.index(new_chromosome[i]))
-                if len(not_included_gens) == 0:
-                    break
-
+        try:
+            exchange_length: int = random.randint(1, self.len_of_citizen - exchange_start_position) if length == -1 \
+                else length
+        except Exception as ex:
+            exchange_length = int(0.1 * self.len_of_citizen)
+        new_chromosome: List = chromosome_1[0:exchange_start_position] +\
+                               chromosome_2[exchange_start_position: exchange_start_position + exchange_length] +\
+                               chromosome_1[exchange_start_position + exchange_length:]
         return new_chromosome
 
     def _mutate(self, chromosome):
@@ -202,8 +179,8 @@ class GeneticAlgorithm:
         :param chromosome: a chromosome to mutate
         :return: mutated chromosome
         """
-        gens_to_mutate = random.sample(list(range(self.n_cities)),
-                                       k=math.ceil(self.parameters.mutation_rate * self.n_cities))
+        gens_to_mutate = random.sample(list(range(self.len_of_citizen)),
+                                       k=math.ceil(self.parameters.mutation_rate * self.len_of_citizen))
         removed_values = [chromosome[n] for n in gens_to_mutate]
         random.shuffle(removed_values)
         for i, n in enumerate(gens_to_mutate):
