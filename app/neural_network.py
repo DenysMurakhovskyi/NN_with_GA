@@ -8,6 +8,10 @@ from random import shuffle
 class Layer:
 
     @property
+    def neurons(self):
+        return self._neurons
+
+    @property
     def neurons_type(self):
         if self.number_of_neurons > 0:
             return self._neurons[0].__class__.__name__
@@ -69,6 +73,18 @@ class NeuralNetwork:
                 result.append(neuron.bias)
         return result
 
+    @biases.setter
+    def biases(self, value):
+        counter = 0
+        if len(value) != len(self.biases):
+            raise ValueError('Improper len of values array')
+        for layer in self.layers:
+            if layer.neurons_type == 'InputNeuron':
+                continue
+            for neuron in layer.neurons:
+                neuron.bias = value[counter]
+                counter += 1
+
     @property
     def layers(self):
         return self._layers
@@ -110,8 +126,15 @@ class NeuralNetwork:
 
     @weights.setter
     def weights(self, value):
-        pass
-
+        counter = 0
+        if len(value) != self.len_weights:
+            raise ValueError('Improper len of values array')
+        for layer in self.layers:
+            if layer.neurons_type == 'InputNeuron':
+                continue
+            for neuron in layer.neurons:
+                neuron.weights = value[counter:counter + len(neuron.weights)]
+                counter += len(neuron.weights)
 
     def __init__(self, layers_config: np.array, variables_number: int = 1) -> NoReturn:
         self._variables_number = variables_number

@@ -2,6 +2,7 @@ from random import choices
 from unittest import TestCase
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from app.neural_network import NeuralNetwork
 
@@ -44,6 +45,16 @@ class TestNeuralNetwork(TestCase):
         X = list(zip(xs, ys))
         result = self.nn._calculate_vectorized(X)
         pass
+
+    def test_set_weights(self):
+        values = 2 * np.ones(self.nn.len_weights)
+        self.nn.weights = values
+        assert_array_equal(values, self.nn.weights)
+
+    def test_set_biases(self):
+        values = 2 * np.ones(len(self.nn.biases))
+        self.nn.biases = values
+        assert_array_equal(values, self.nn.biases)
 
 
 
