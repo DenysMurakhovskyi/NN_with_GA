@@ -74,6 +74,16 @@ class NeuralNetwork:
         return self._layers
 
     @property
+    def len_weights(self):
+        result = 0
+        for layer in self._layers:
+            if layer.neurons_type == 'InputNeuron':
+                continue
+            for neuron in layer:
+                result += len(neuron.weights)
+        return result
+
+    @property
     def num_of_layers(self):
         return len(self._layers)
 
@@ -98,6 +108,11 @@ class NeuralNetwork:
                 result.extend(neuron.weights)
         return result
 
+    @weights.setter
+    def weights(self, value):
+        pass
+
+
     def __init__(self, layers_config: np.array, variables_number: int = 1) -> NoReturn:
         self._variables_number = variables_number
         self._create_layers(layers_config, variables_number)
@@ -116,15 +131,19 @@ class NeuralNetwork:
     def fit(self, X: List[np.array], y: List, verbose=False) -> NoReturn:
         if len(X) != len(y):
             raise ValueError('Different length of arguments and func value')
+        self._X_train, self._X_test, self._y_train, self._y_test = self._train_test_split(X, y)
+
+    @staticmethod
+    def _train_test_split(X: List[np.array], y: List):
         values_numbers = list(range(len(X)))
         shuffle(values_numbers)
         train_values = values_numbers[:int(len(X) * 0.8)]
         test_values = [value for value in values_numbers if value not in train_values]
-        self._X_train = np.take(X, train_values, axis=0)
-        self._y_train = np.take(y, train_values, axis=0)
-        self._X_test = np.take(X, test_values, axis=0)
-        self._y_test = np.take(y, test_values, axis=0)
-        pass
+        X_train = np.take(X, train_values, axis=0)
+        y_train = np.take(y, train_values, axis=0)
+        X_test = np.take(X, test_values, axis=0)
+        y_test = np.take(y, test_values, axis=0)
+        return X_train, X_test, y_train, y_test
 
     def _calculate_vectorized(self, inputs_array: Union[List[np.array], np.array]):
         result = [self._calculate(inputs) for inputs in inputs_array]

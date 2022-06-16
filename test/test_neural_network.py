@@ -21,6 +21,7 @@ class TestNeuralNetwork(TestCase):
         self.assertEqual(272, len(actual))
         actual = self.nn.biases
         self.assertEqual(39, len(actual))
+        self.assertEqual(272, self.nn.len_weights)
 
     def test_calculate(self):
         actual = self.nn._calculate(inputs=np.array([1, 1]))
