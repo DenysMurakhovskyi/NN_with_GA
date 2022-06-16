@@ -50,10 +50,11 @@ class InputNeuron(AbsNeuron):
     def __init__(self) -> NoReturn:
         super().__init__(number_of_inputs=1, func=lambda x: x)
 
-    def feed_forward(self, inputs: float) -> float:
-        if isinstance(inputs, float) | isinstance(inputs, int):
+    def feed_forward(self, inputs: Any) -> float:
+        try:
+            inputs = float(inputs)
             return inputs
-        else:
+        except TypeError | ValueError:
             raise ValueError('Improper input for InputNeuron')
 
 
