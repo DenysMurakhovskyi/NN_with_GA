@@ -115,7 +115,8 @@ class NeuralNetwork:
     @property
     def r2_(self):
         if len(self._y_test) > 0:
-            return self._calculate_r2()
+            y_pred = self._calculate_vectorized(self._X_test)
+            return self._calculate_r2(y_pred)
         else:
             return -np.inf
 
@@ -187,11 +188,14 @@ class NeuralNetwork:
         result = [self._calculate(inputs) for inputs in inputs_array]
         return result
 
-    def _calculate_r2(self):
-        y_pred = self._calculate_vectorized(self._X_test)
-        corr_matrix = np.corrcoef(y_pred, self._y_test)
+    @staticmethod
+    def _r2_score(y_pred, y_true):
+        corr_matrix = np.corrcoef(y_pred, y_true)
         corr = corr_matrix[0, 1]
         return corr ** 2
+
+    def _calculate_r2(self, y_pred):
+        return self._r2_score(y_pred, self._y_test)
 
     def _calculate(self, inputs: np.array) -> float:
         if len(inputs) != self.variables_number:
