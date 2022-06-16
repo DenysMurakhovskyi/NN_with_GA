@@ -90,6 +90,15 @@ class NeuralNetwork:
         return self._layers
 
     @property
+    def len_biases(self):
+        result = 0
+        for layer in self._layers:
+            if layer.neurons_type == 'InputNeuron':
+                continue
+            result += layer.number_of_neurons
+        return result
+
+    @property
     def len_weights(self):
         result = 0
         for layer in self._layers:
@@ -155,6 +164,12 @@ class NeuralNetwork:
         if len(X) != len(y):
             raise ValueError('Different length of arguments and func value')
         self._X_train, self._X_test, self._y_train, self._y_test = self._train_test_split(X, y)
+
+    def _set_values(self, values):
+        if len(values) != self.len_biases + self.len_weights:
+            raise ValueError('Improper values length')
+        self.weights = values[:self.len_weights]
+        self.biases = values[self.len_weights:]
 
     @staticmethod
     def _train_test_split(X: List[np.array], y: List):

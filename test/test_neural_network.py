@@ -56,6 +56,12 @@ class TestNeuralNetwork(TestCase):
         self.nn.biases = values
         assert_array_equal(values, self.nn.biases)
 
+    def test_set_values(self):
+        values = 2 * np.ones(self.nn.len_weights + self.nn.len_biases)
+        self.nn._set_values(values)
+        assert_array_equal(2 * np.ones(self.nn.len_weights), self.nn.weights)
+        assert_array_equal(2 * np.ones(self.nn.len_biases), self.nn.biases)
+
 
 
 
