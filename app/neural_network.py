@@ -197,7 +197,8 @@ class NeuralNetwork:
         corr = corr_matrix[0, 1]
         return corr ** 2
 
-    def calculate_r2(self):
+    def calculate_r2(self, values):
+        self._set_values(values)
         y_pred = self._calculate_vectorized(self._X_train)
         return self._r2_score(y_pred, self._y_train)
 

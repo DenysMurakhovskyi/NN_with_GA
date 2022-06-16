@@ -33,6 +33,8 @@ class TestGA(TestCase):
         self.ga._generate()
         evaluations = []
         for citizen in self.ga.population:
-            self.nn._set_values(citizen)
-            evaluations.append(self.ga.fitness())
+            evaluations.append(self.ga.fitness(citizen))
         self.assertLess(10, len(set(evaluations)))
+
+        actual = self.ga._evaluate_fitness()
+        self.assertEqual(max(evaluations), max(actual))

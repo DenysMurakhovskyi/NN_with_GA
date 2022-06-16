@@ -106,7 +106,7 @@ class GeneticAlgorithm:
         return self.population[0, ], list(evaluated_final_population.values())[0]
 
     @staticmethod
-    def _default_fitness(y_pred, y_true):
+    def _default_fitness(y_pred):
         return 0
 
     def _define_stop_criteria(self, current_best_result: float) -> bool:
@@ -146,12 +146,15 @@ class GeneticAlgorithm:
                     children = np.vstack((children, child))
         return children
 
-    def _evaluate_fitness(self, members: Union[NDArray[NDArray], None]) -> List[Tuple]:
+    def _evaluate_fitness(self) -> List[float]:
         """
         Evaluates the fitness function for the sequence of given members
-        :return: the dictionary of calculated values
+        :return: the list of calculated values
         """
-
+        evaluations = []
+        for citizen in self.population:
+            evaluations.append(self.fitness(citizen))
+        return evaluations
 
     def _generate(self) -> None:
         """
