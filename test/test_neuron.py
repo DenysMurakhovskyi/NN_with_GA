@@ -13,6 +13,10 @@ class TestNeuron(TestCase):
         self.assertEqual(1, inu.feedforward(inputs=1))
 
     def test_neuron(self):
-        nu = Neuron(weights=np.array([0, 1]), bias=4)
+        nu = Neuron(number_of_inputs=2)
+        actual = nu.feedforward(np.array([2, 3]))
+        assert_almost_equal(actual, 0.993307, decimal=6)
+
+        nu.weights, nu.bias = np.array([0, 1]), 4
         actual = nu.feedforward(np.array([2, 3]))
         assert_almost_equal(actual, 0.999088, decimal=6)

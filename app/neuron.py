@@ -6,13 +6,39 @@ from abc import ABC, abstractmethod
 class AbsNeuron(ABC):
 
     @property
-    def inputs(self) -> int:
-        return len(self.weights)
+    def bias(self):
+        return self._bias
 
-    def __init__(self, weights, bias, func=None) -> NoReturn:
-        self.weights: np.array = weights
-        self.bias: float = bias
-        self.func: Callable = func
+    @bias.setter
+    def bias(self, value):
+        self._bias = value
+
+    @property
+    def func(self):
+        return self._func
+
+    @property
+    def inputs(self) -> int:
+        return len(self._weights)
+
+    @property
+    def weights(self):
+        return self._weights
+
+    @weights.setter
+    def weights(self, value):
+        if len(value) == len(self._weights):
+            self._weights = value
+        else:
+            raise ValueError('Improper length of the value')
+
+    def __init__(self, number_of_inputs=1, func=None) -> NoReturn:
+        self._weights: np.array = np.ones(number_of_inputs)
+        self._bias: float = 0
+        self._func: Callable = func
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}: inputs={self.inputs}"
 
     @abstractmethod
     def feedforward(self, inputs: np.array) -> Any:
@@ -21,8 +47,8 @@ class AbsNeuron(ABC):
 
 class InputNeuron(AbsNeuron):
 
-    def __init__(self, weights=1, bias=0, func=lambda x: x) -> NoReturn:
-        super().__init__(weights, bias, func)
+    def __init__(self) -> NoReturn:
+        super().__init__(number_of_inputs=1, func=lambda x: x)
 
     def feedforward(self, inputs: float) -> float:
         if isinstance(inputs, float) | isinstance(inputs, int):
@@ -33,8 +59,10 @@ class InputNeuron(AbsNeuron):
 
 class Neuron(AbsNeuron):
 
-    def __init__(self, weights, bias, func=None) -> NoReturn:
-        super().__init__(weights, bias, func if func else self._sigmoid)
+    def __init__(self, number_of_inputs=1, func=None) -> NoReturn:
+        if not func:
+            func = self._sigmoid
+        super().__init__(number_of_inputs=number_of_inputs, func=func)
 
     @classmethod
     def _sigmoid(cls, x: float) -> float:
@@ -42,4 +70,4 @@ class Neuron(AbsNeuron):
 
     def feedforward(self, inputs: np.array) -> float:
         total: float = np.dot(self.weights, inputs) + self.bias
-        return self.func(total)
+        return self._func(total)
