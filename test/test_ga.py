@@ -1,17 +1,38 @@
+from random import choices
 from unittest import TestCase
 
-from app.ga import GeneticAlgorithm
-
 import numpy as np
+
+from app.ga import GeneticAlgorithm
+from app.neural_network import NeuralNetwork
+from test.utils import make_initial_data
 
 
 class TestGA(TestCase):
 
+    @staticmethod
+    def _func(x: float, y: float):
+        return np.sin(2 * np.sqrt(x**2 + y**2)) / (np.sqrt(x**2 + y**2) + 0.001)
+
     def setUp(self) -> None:
-        self.ga = GeneticAlgorithm(len_of_citizen=40,
-                                   values_range=np.array([-500, 500]))
+        self.nn = NeuralNetwork(layers_config=np.array([4, 8, 10, 8, 8]),
+                                variables_number=2)
+        self.citizen_len = self.nn.len_weights + self.nn.len_biases
+        self.ga = GeneticAlgorithm(len_of_citizen=self.citizen_len,
+                                   fitness_func=self.nn.calculate_r2,
+                                   values_range=np.array([-1, 1]))
 
     def test_generate(self):
         self.ga._generate()
-        self.assertEqual(40, self.ga.population.shape[1])
+        self.assertEqual(self.citizen_len, self.ga.population.shape[1])
         self.assertEqual(200, self.ga.population.shape[0])
+
+    def test_evaluate_fitness(self):
+        X, y = make_initial_data()
+        self.nn._prepare_fit(X, y)
+        self.ga._generate()
+        evaluations = []
+        for citizen in self.ga.population:
+            self.nn._set_values(citizen)
+            evaluations.append(self.ga.fitness())
+        self.assertLess(10, len(set(evaluations)))

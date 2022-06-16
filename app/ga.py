@@ -146,14 +146,12 @@ class GeneticAlgorithm:
                     children = np.vstack((children, child))
         return children
 
-    def _evaluate_fitness(self, members: Union[NDArray[NDArray], None]) -> dict:
+    def _evaluate_fitness(self, members: Union[NDArray[NDArray], None]) -> List[Tuple]:
         """
         Evaluates the fitness function for the sequence of given members
         :return: the dictionary of calculated values
         """
-        population_evaluation = np.apply_along_axis(lambda x: self.fitness(x, self.distances),
-                                                    axis=1, arr=members)
-        return dict(sorted(enumerate(population_evaluation), key=lambda x: x[1]))
+
 
     def _generate(self) -> None:
         """

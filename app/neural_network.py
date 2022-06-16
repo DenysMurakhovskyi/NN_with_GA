@@ -116,7 +116,7 @@ class NeuralNetwork:
     def r2_(self):
         if len(self._y_test) > 0:
             y_pred = self._calculate_vectorized(self._X_test)
-            return self._calculate_r2(y_pred)
+            return self.calculate_r2(y_pred)
         else:
             return -np.inf
 
@@ -162,6 +162,9 @@ class NeuralNetwork:
         self._layers.append(Layer.create_layer(number_of_neurons=1, number_of_inputs=layers_config[-1]))
 
     def fit(self, X: List[np.array], y: List, verbose=False) -> NoReturn:
+        self._prepare_fit(X, y)
+
+    def _prepare_fit(self, X, y):
         if len(X) != len(y):
             raise ValueError('Different length of arguments and func value')
         self._X_train, self._X_test, self._y_train, self._y_test = self._train_test_split(X, y)
@@ -194,8 +197,9 @@ class NeuralNetwork:
         corr = corr_matrix[0, 1]
         return corr ** 2
 
-    def _calculate_r2(self, y_pred):
-        return self._r2_score(y_pred, self._y_test)
+    def calculate_r2(self):
+        y_pred = self._calculate_vectorized(self._X_train)
+        return self._r2_score(y_pred, self._y_train)
 
     def _calculate(self, inputs: np.array) -> float:
         if len(inputs) != self.variables_number:
