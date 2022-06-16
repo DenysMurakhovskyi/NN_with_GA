@@ -1,8 +1,7 @@
+from random import choices
 from unittest import TestCase
 
 import numpy as np
-from random import choices
-from typing import Tuple
 
 from app.neural_network import NeuralNetwork
 
@@ -32,7 +31,11 @@ class TestNeuralNetwork(TestCase):
         ys = choices(np.cumsum(0.01 * np.ones(1001)) - 5.01, k=100)
         func = np.vectorize(self._func)
         y = func(xs, ys)
+        r2 = self.nn.r2_
+        self.assertEqual(-np.inf, r2)
         self.nn.fit(list(zip(xs, ys)), y)
+        r2 = self.nn.r2_
+        self.assertLess(-1000, r2)
 
     def test_calculate_vectorized(self):
         xs = choices(np.cumsum(0.01 * np.ones(1001)) - 5.01, k=20)

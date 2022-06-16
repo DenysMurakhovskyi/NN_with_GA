@@ -78,6 +78,13 @@ class NeuralNetwork:
         return len(self._layers)
 
     @property
+    def r2_(self):
+        if len(self._y_test) > 0:
+            return self._calculate_r2()
+        else:
+            return -np.inf
+
+    @property
     def variables_number(self):
         return self._variables_number
 
@@ -95,7 +102,6 @@ class NeuralNetwork:
         self._variables_number = variables_number
         self._create_layers(layers_config, variables_number)
         self._X_train, self._y_train, self._X_test, self._y_test = [], [], [], []
-        self._r2 = -np.inf
 
     def _create_layers(self, layers_config, variables_number):
         self._layers = [Layer.create_layer(number_of_neurons=variables_number,
@@ -125,7 +131,10 @@ class NeuralNetwork:
         return result
 
     def _calculate_r2(self):
-        pass
+        y_pred = self._calculate_vectorized(self._X_test)
+        corr_matrix = np.corrcoef(y_pred, self._y_test)
+        corr = corr_matrix[0, 1]
+        return corr ** 2
 
     def _calculate(self, inputs: np.array) -> float:
         if len(inputs) != self.variables_number:
