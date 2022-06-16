@@ -1,5 +1,5 @@
 import numpy as np
-from typing import NoReturn, List
+from typing import NoReturn, List, Union
 
 from .neuron import Neuron, InputNeuron
 from random import shuffle
@@ -120,10 +120,14 @@ class NeuralNetwork:
         self._y_test = np.take(y, test_values, axis=0)
         pass
 
+    def _calculate_vectorized(self, inputs_array: Union[List[np.array], np.array]):
+        result = [self._calculate(inputs) for inputs in inputs_array]
+        return result
+
     def _calculate_r2(self):
         pass
 
-    def predict(self, inputs: np.array) -> float:
+    def _calculate(self, inputs: np.array) -> float:
         if len(inputs) != self.variables_number:
             raise ValueError('Improper number of variables')
         result = self._layers[0].feed_forward(inputs)

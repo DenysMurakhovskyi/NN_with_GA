@@ -24,7 +24,7 @@ class TestNeuralNetwork(TestCase):
         self.assertEqual(39, len(actual))
 
     def test_calculate(self):
-        actual = self.nn.predict(inputs=np.array([1, 1]))
+        actual = self.nn._calculate(inputs=np.array([1, 1]))
         pass
 
     def test_fit(self):
@@ -33,5 +33,14 @@ class TestNeuralNetwork(TestCase):
         func = np.vectorize(self._func)
         y = func(xs, ys)
         self.nn.fit(list(zip(xs, ys)), y)
+
+    def test_calculate_vectorized(self):
+        xs = choices(np.cumsum(0.01 * np.ones(1001)) - 5.01, k=20)
+        ys = choices(np.cumsum(0.01 * np.ones(1001)) - 5.01, k=20)
+        X = list(zip(xs, ys))
+        result = self.nn._calculate_vectorized(X)
+        pass
+
+
 
 
