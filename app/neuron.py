@@ -1,9 +1,16 @@
 import numpy as np
-from typing import Callable, NoReturn, Any, List
+from typing import Callable, NoReturn, Any
 from abc import ABC, abstractmethod
 
 
+EXP_COEF = 4
+BIAS_MULTIPLIER = 3
+
+
 class AbsNeuron(ABC):
+    """
+    The abstract method for the neuron
+    """
 
     @property
     def bias(self):
@@ -37,7 +44,7 @@ class AbsNeuron(ABC):
         self._bias: float = 0
         self._func: Callable = func
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}: inputs={self.inputs}"
 
     @abstractmethod
@@ -46,6 +53,10 @@ class AbsNeuron(ABC):
 
 
 class InputNeuron(AbsNeuron):
+
+    """
+    The neuron of the input layer
+    """
 
     def __init__(self) -> NoReturn:
         super().__init__(number_of_inputs=1, func=lambda x: x)
@@ -60,6 +71,10 @@ class InputNeuron(AbsNeuron):
 
 class Neuron(AbsNeuron):
 
+    """
+    The neuron of hidden layers and the output layer
+    """
+
     def __init__(self, number_of_inputs=1, func=None) -> NoReturn:
         if not func:
             func = self._sigmoid
@@ -67,8 +82,19 @@ class Neuron(AbsNeuron):
 
     @classmethod
     def _sigmoid(cls, x: float) -> float:
-        return 1 / (1 + np.exp(-x))
+        """
+        The activation function. The sigmoid is used
+        :param x: the argument value
+        :return: the calculated value
+        """
+        result: float = 2 / (1 + np.exp(-4 * x)) - 1
+        return result
 
     def feed_forward(self, inputs: np.array) -> float:
-        total: float = np.dot(self.weights, inputs) + self.bias
+        """
+        The feed forward function
+        :param inputs: the arguments
+        :return: the function value
+        """
+        total: float = np.dot(self.weights, inputs)
         return self._func(total)

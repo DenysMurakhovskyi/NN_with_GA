@@ -1,4 +1,4 @@
-from random import choices
+import random
 from unittest import TestCase
 
 import numpy as np
@@ -19,7 +19,7 @@ class TestGA(TestCase):
                                 variables_number=2)
         self.citizen_len = self.nn.len_weights + self.nn.len_biases
         self.ga = GeneticAlgorithm(len_of_citizen=self.citizen_len,
-                                   fitness_func=self.nn.calculate_r2,
+                                   fitness_func=self.nn.calculate_rmse,
                                    values_range=np.array([-1, 1]))
 
     def test_generate(self):
@@ -40,7 +40,7 @@ class TestGA(TestCase):
         self.assertEqual(max(evaluations), max(actual))
 
     def test_ga_solve(self):
+        random.seed(34)
         X, y = make_initial_data()
-        self.nn._prepare_fit(X, y)
-        self.ga.solve()
+        self.nn.fit(X, y, verbose=True)
 
